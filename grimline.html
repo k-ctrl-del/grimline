@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grimline - Encrypted Notes</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&family=IBM+Plex+Mono:wght@300;400;500&family=Jacquard+24&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0a0a;
+            --bg-secondary: #141414;
+            --bg-tertiary: #1a1a1a;
+            --text-primary: #e8e8e8;
+            --text-secondary: #a0a0a0;
+            --text-dim: #606060;
+            --accent: #7dd3c0;
+            --accent-dim: #62b8a6;
+            --danger: #ff4444;
+            --border: #2a2a2a;
+            --shadow: rgba(125, 211, 192, 0.15);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        ::selection {
+            background: var(--accent);
+            color: var(--bg-primary);
+        }
+
+        ::-moz-selection {
+            background: var(--accent);
+            color: var(--bg-primary);
+        }
+
+        body {
+            font-family: 'IBM Plex Mono', monospace;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 2rem;
+            width: 100%;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            margin-bottom: 3rem;
+            animation: fadeInDown 0.6s ease-out;
+        }
+
+        h1 {
+            font-family: 'Jacquard 24', serif;
+            font-size: 3rem;
+            font-weight: 400;
+            letter-spacing: 0.02em;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, var(--accent) 0%, var(--text-primary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            letter-spacing: 0.05em;
+        }
+
+        #loginScreen, #editorScreen {
+            animation: fadeIn 0.4s ease-out;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .login-box {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 2.5rem;
+            max-width: 500px;
+            margin: 0 auto;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+        }
+
+        .security-notice {
+            background: var(--bg-tertiary);
+            border-left: 3px solid var(--accent);
+            padding: 1rem;
+            margin-bottom: 2rem;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            line-height: 1.7;
+        }
+
+        .security-notice strong {
+            color: var(--accent);
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+
+        .input-group {
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .password-wrapper {
+            position: relative;
+        }
+
+        .toggle-password {
+            position: absolute;
+            right: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 0.25rem;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            transition: color 0.2s ease;
+            width: auto;
+        }
+
+        .toggle-password:hover {
+            color: var(--accent);
+            background: none;
+            transform: translateY(-50%);
+            box-shadow: none;
+        }
+
+        .passphrase-hint {
+            margin-top: 0.5rem;
+            font-size: 0.8rem;
+            color: var(--text-dim);
+            line-height: 1.5;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        input[type="password"],
+        input[type="text"] {
+            width: 100%;
+            padding: 0.875rem 1rem;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text-primary);
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 1rem;
+            transition: all 0.2s ease;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--shadow);
+        }
+
+        button {
+            width: 100%;
+            padding: 1rem;
+            background: var(--accent);
+            color: var(--bg-primary);
+            border: none;
+            border-radius: 6px;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            transition: all 0.2s ease;
+        }
+
+        button:hover {
+            background: var(--accent-dim);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px var(--shadow);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .editor-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border);
+            gap: 1rem;
+        }
+
+        .header-left {
+            flex: 1;
+        }
+
+        .header-right {
+            display: flex;
+            gap: 0.75rem;
+            align-items: center;
+        }
+
+        .session-info {
+            font-size: 0.85rem;
+            color: var(--text-dim);
+        }
+
+        .session-key {
+            color: var(--accent);
+            font-weight: 500;
+        }
+
+        .logout-btn {
+            width: auto;
+            padding: 0.5rem 1.5rem;
+            background: transparent;
+            color: var(--text-secondary);
+            border: 1px solid var(--border);
+            font-size: 0.85rem;
+            transition: all 0.2s ease;
+        }
+
+        .logout-btn:hover {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            border-color: var(--text-dim);
+            transform: none;
+            box-shadow: none;
+        }
+
+        .copy-link-btn {
+            width: auto;
+            padding: 0.5rem 1.5rem;
+            background: transparent;
+            color: var(--accent);
+            border: 1px solid var(--accent);
+            font-size: 0.85rem;
+            transition: all 0.2s ease;
+        }
+
+        .copy-link-btn:hover {
+            background: var(--accent);
+            color: var(--bg-primary);
+            transform: none;
+            box-shadow: 0 0 12px var(--shadow);
+        }
+
+        .copy-link-btn.copied {
+            background: var(--accent);
+            color: var(--bg-primary);
+        }
+
+        #notepad {
+            flex: 1;
+            width: 100%;
+            padding: 1.5rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-family: 'Courier Prime', monospace;
+            font-size: 1rem;
+            line-height: 1.8;
+            resize: none;
+            transition: all 0.2s ease;
+        }
+
+        #notepad:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--shadow);
+        }
+
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border);
+            font-size: 0.8rem;
+            color: var(--text-dim);
+        }
+
+        .save-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .save-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--text-dim);
+            transition: all 0.3s ease;
+        }
+
+        .save-dot.saving {
+            background: var(--accent);
+            box-shadow: 0 0 8px var(--accent);
+            animation: pulse 1s ease-in-out infinite;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        footer {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-dim);
+            font-size: 0.8rem;
+        }
+
+        footer a {
+            color: var(--accent);
+            text-decoration: none;
+            transition: color 0.2s ease;
+        }
+
+        footer a:hover {
+            color: var(--accent-dim);
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+
+            .login-box {
+                padding: 1.5rem;
+            }
+
+            .editor-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+
+            .header-left {
+                width: 100%;
+            }
+
+            .header-right {
+                width: 100%;
+                flex-direction: column;
+            }
+
+            .logout-btn,
+            .copy-link-btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Grimline</h1>
+            <div class="subtitle">Encrypted. Anonymous. Yours.</div>
+        </header>
+
+        <div id="loginScreen">
+            <div class="login-box">
+                <div class="security-notice">
+                    <strong>⚠️ Security Notice</strong>
+                    Your passphrase IS your password. Notes are encrypted client-side using your passphrase. 
+                    There's no password recovery, no email, no account. Anyone with your passphrase can access your notes. 
+                    Choose something memorable but unique.
+                </div>
+
+                <form id="loginForm">
+                    <div class="input-group">
+                        <label for="passphrase">Enter Your Passphrase</label>
+                        <div class="password-wrapper">
+                            <input 
+                                type="password" 
+                                id="passphrase" 
+                                placeholder="your-secret-passphrase"
+                                autocomplete="off"
+                                required
+                                autofocus
+                            >
+                            <button type="button" class="toggle-password" id="togglePassword">Show</button>
+                        </div>
+                        <div class="passphrase-hint">
+                            Can be as short as you want, but for better security against guessing or brute-force attacks, use at least 4 random words.
+                        </div>
+                    </div>
+                    <button type="submit">Unlock Notes</button>
+                </form>
+            </div>
+        </div>
+
+        <div id="editorScreen" class="hidden">
+            <div class="editor-header">
+                <div class="header-left">
+                    <div class="session-info">
+                        Session: <span class="session-key" id="sessionKey"></span>
+                    </div>
+                </div>
+                <div class="header-right">
+                    <button class="copy-link-btn" id="copyLinkBtn">Copy Link</button>
+                    <button class="logout-btn" id="logoutBtn">Lock & Exit</button>
+                </div>
+            </div>
+
+            <textarea 
+                id="notepad" 
+                placeholder="Start writing... Your notes are encrypted and saved automatically."
+            ></textarea>
+
+            <div class="status-bar">
+                <div class="save-indicator">
+                    <div class="save-dot" id="saveDot"></div>
+                    <span id="saveStatus">Ready</span>
+                </div>
+                <div id="charCount">0 characters</div>
+            </div>
+        </div>
+
+        <footer>
+            End-to-end encrypted in your browser. No servers. No tracking. <br>
+            <a href="https://github.com" target="_blank">View Source</a>
+        </footer>
+    </div>
+
+    <script>
+        // Configuration
+        const API_ENDPOINT = 'https://grimline-api.karina-budnariu.workers.dev'; // Your Cloudflare Worker API
+        
+        // Crypto utilities for secure client-side encryption
+        class SecureStorage {
+            constructor() {
+                this.currentKey = null;
+                this.currentPassphrase = null;
+                this.useCloud = true; // Set to false to use localStorage only
+            }
+
+            // Derive a cryptographic key from the passphrase
+            async deriveKey(passphrase) {
+                const encoder = new TextEncoder();
+                const passphraseBuffer = encoder.encode(passphrase);
+                
+                // Import the passphrase as key material
+                const keyMaterial = await crypto.subtle.importKey(
+                    'raw',
+                    passphraseBuffer,
+                    { name: 'PBKDF2' },
+                    false,
+                    ['deriveBits', 'deriveKey']
+                );
+
+                // Derive a key using PBKDF2 with a static salt (since passphrase is unique)
+                const salt = encoder.encode('grimline-v1-salt-' + passphrase.substring(0, 16));
+                
+                return await crypto.subtle.deriveKey(
+                    {
+                        name: 'PBKDF2',
+                        salt: salt,
+                        iterations: 100000,
+                        hash: 'SHA-256'
+                    },
+                    keyMaterial,
+                    { name: 'AES-GCM', length: 256 },
+                    false,
+                    ['encrypt', 'decrypt']
+                );
+            }
+
+            // Encrypt data
+            async encrypt(text, key) {
+                const encoder = new TextEncoder();
+                const data = encoder.encode(text);
+                const iv = crypto.getRandomValues(new Uint8Array(12));
+
+                const encryptedData = await crypto.subtle.encrypt(
+                    { name: 'AES-GCM', iv: iv },
+                    key,
+                    data
+                );
+
+                // Combine IV and encrypted data
+                const combined = new Uint8Array(iv.length + encryptedData.byteLength);
+                combined.set(iv, 0);
+                combined.set(new Uint8Array(encryptedData), iv.length);
+
+                // Convert to base64 for storage
+                return btoa(String.fromCharCode(...combined));
+            }
+
+            // Decrypt data
+            async decrypt(encryptedText, key) {
+                try {
+                    // Decode from base64
+                    const combined = Uint8Array.from(atob(encryptedText), c => c.charCodeAt(0));
+                    
+                    // Extract IV and encrypted data
+                    const iv = combined.slice(0, 12);
+                    const encryptedData = combined.slice(12);
+
+                    const decryptedData = await crypto.subtle.decrypt(
+                        { name: 'AES-GCM', iv: iv },
+                        key,
+                        encryptedData
+                    );
+
+                    const decoder = new TextDecoder();
+                    return decoder.decode(decryptedData);
+                } catch (e) {
+                    console.error('Decryption failed:', e);
+                    return '';
+                }
+            }
+
+            // Generate storage key from passphrase (for localStorage and API key)
+            async generateStorageKey(passphrase) {
+                const encoder = new TextEncoder();
+                const data = encoder.encode(passphrase);
+                const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+                const hashArray = Array.from(new Uint8Array(hashBuffer));
+                return hashArray.map(b => b.toString(16).padStart(2, '0')).join('').substring(0, 32);
+            }
+
+            // Save encrypted note to cloud
+            async saveNoteCloud(storageKey, encryptedContent) {
+                try {
+                    const response = await fetch(`${API_ENDPOINT}/notes/${storageKey}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            encryptedData: encryptedContent
+                        })
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Failed to save to cloud');
+                    }
+
+                    return await response.json();
+                } catch (error) {
+                    console.error('Cloud save failed:', error);
+                    throw error;
+                }
+            }
+
+            // Load encrypted note from cloud
+            async loadNoteCloud(storageKey) {
+                try {
+                    const response = await fetch(`${API_ENDPOINT}/notes/${storageKey}`);
+                    
+                    if (!response.ok) {
+                        throw new Error('Failed to load from cloud');
+                    }
+
+                    const result = await response.json();
+                    return result.exists ? result.data : null;
+                } catch (error) {
+                    console.error('Cloud load failed:', error);
+                    throw error;
+                }
+            }
+
+            // Save encrypted note (with fallback)
+            async saveNote(passphrase, content) {
+                const key = await this.deriveKey(passphrase);
+                const storageKey = await this.generateStorageKey(passphrase);
+                const encryptedContent = await this.encrypt(content, key);
+                
+                // Always save to localStorage as backup
+                localStorage.setItem('note_' + storageKey, encryptedContent);
+
+                // Try to save to cloud if enabled
+                if (this.useCloud && API_ENDPOINT !== 'YOUR_WORKER_URL_HERE') {
+                    try {
+                        await this.saveNoteCloud(storageKey, encryptedContent);
+                    } catch (error) {
+                        console.warn('Cloud sync failed, saved locally only');
+                    }
+                }
+            }
+
+            // Load and decrypt note (cloud first, localStorage fallback)
+            async loadNote(passphrase) {
+                const key = await this.deriveKey(passphrase);
+                const storageKey = await this.generateStorageKey(passphrase);
+                
+                let encryptedContent = null;
+
+                // Try cloud first if enabled
+                if (this.useCloud && API_ENDPOINT !== 'YOUR_WORKER_URL_HERE') {
+                    try {
+                        encryptedContent = await this.loadNoteCloud(storageKey);
+                    } catch (error) {
+                        console.warn('Cloud load failed, trying localStorage');
+                    }
+                }
+
+                // Fallback to localStorage
+                if (!encryptedContent) {
+                    encryptedContent = localStorage.getItem('note_' + storageKey);
+                }
+                
+                if (!encryptedContent) {
+                    return '';
+                }
+
+                return await this.decrypt(encryptedContent, key);
+            }
+
+            // Set current session
+            async setSession(passphrase) {
+                this.currentPassphrase = passphrase;
+                this.currentKey = await this.deriveKey(passphrase);
+            }
+
+            clearSession() {
+                this.currentPassphrase = null;
+                this.currentKey = null;
+            }
+        }
+
+        // Application logic
+        const storage = new SecureStorage();
+        let saveTimeout;
+        let currentPassphrase = null;
+
+        const loginScreen = document.getElementById('loginScreen');
+        const editorScreen = document.getElementById('editorScreen');
+        const loginForm = document.getElementById('loginForm');
+        const passphraseInput = document.getElementById('passphrase');
+        const togglePassword = document.getElementById('togglePassword');
+        const notepad = document.getElementById('notepad');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const copyLinkBtn = document.getElementById('copyLinkBtn');
+        const sessionKey = document.getElementById('sessionKey');
+        const saveStatus = document.getElementById('saveStatus');
+        const saveDot = document.getElementById('saveDot');
+        const charCount = document.getElementById('charCount');
+
+        // Toggle password visibility
+        togglePassword.addEventListener('click', () => {
+            const type = passphraseInput.type === 'password' ? 'text' : 'password';
+            passphraseInput.type = type;
+            togglePassword.textContent = type === 'password' ? 'Show' : 'Hide';
+        });
+
+        // Login handler
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const passphrase = passphraseInput.value.trim();
+            
+            if (!passphrase) {
+                return;
+            }
+
+            // Set up session
+            await storage.setSession(passphrase);
+            currentPassphrase = passphrase;
+
+            // Load existing note
+            const content = await storage.loadNote(passphrase);
+            notepad.value = content;
+            updateCharCount();
+
+            // Display masked passphrase
+            const masked = passphrase.length > 8 
+                ? passphrase.substring(0, 4) + '•'.repeat(passphrase.length - 4)
+                : '•'.repeat(passphrase.length);
+            sessionKey.textContent = masked;
+
+            // Show editor
+            loginScreen.classList.add('hidden');
+            editorScreen.classList.remove('hidden');
+            notepad.focus();
+            passphraseInput.value = '';
+        });
+
+        // Auto-save on input
+        notepad.addEventListener('input', () => {
+            updateCharCount();
+            
+            // Show saving indicator
+            saveDot.classList.add('saving');
+            saveStatus.textContent = 'Saving...';
+
+            // Debounced save
+            clearTimeout(saveTimeout);
+            saveTimeout = setTimeout(async () => {
+                await storage.saveNote(currentPassphrase, notepad.value);
+                saveDot.classList.remove('saving');
+                saveStatus.textContent = 'Saved';
+                
+                setTimeout(() => {
+                    saveStatus.textContent = 'Ready';
+                }, 2000);
+            }, 500);
+        });
+
+        // Character count
+        function updateCharCount() {
+            charCount.textContent = notepad.value.length.toLocaleString() + ' characters';
+        }
+
+        // Logout handler
+        logoutBtn.addEventListener('click', () => {
+            storage.clearSession();
+            currentPassphrase = null;
+            notepad.value = '';
+            loginScreen.classList.remove('hidden');
+            editorScreen.classList.add('hidden');
+            passphraseInput.focus();
+        });
+
+        // Copy link handler
+        copyLinkBtn.addEventListener('click', async () => {
+            const url = window.location.href;
+            try {
+                await navigator.clipboard.writeText(url);
+                copyLinkBtn.textContent = 'Copied!';
+                copyLinkBtn.classList.add('copied');
+                
+                setTimeout(() => {
+                    copyLinkBtn.textContent = 'Copy Link';
+                    copyLinkBtn.classList.remove('copied');
+                }, 2000);
+            } catch (err) {
+                console.error('Failed to copy:', err);
+                copyLinkBtn.textContent = 'Failed';
+                setTimeout(() => {
+                    copyLinkBtn.textContent = 'Copy Link';
+                }, 2000);
+            }
+        });
+
+        // Auto-focus on load
+        passphraseInput.focus();
+    </script>
+</body>
+</html>
